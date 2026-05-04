@@ -6,6 +6,10 @@ yarn-error.log*
 package-lock.json
 package.json
 
+# Firebase
+.firebase/
+
+
 # OS files
 .DS_Store
 Thumbs.db

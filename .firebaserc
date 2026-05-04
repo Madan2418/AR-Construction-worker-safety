@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "ar-worker-safety"
+  },
+  "targets": {
+    "ar-worker-safety": {
+      "hosting": {
+        "app": ["ar-worker-safety-26745"]
+      }
+    }
+  }
+}
