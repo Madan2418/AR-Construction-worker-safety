@@ -1,0 +1,44 @@
+{
+  "name": "AR Construction Safety Visualizer",
+  "short_name": "AR Safety",
+  "description": "See the danger before you walk into it — real-time AR safety zone overlays for construction sites",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0C10",
+  "theme_color": "#0A0C10",
+  "lang": "en",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Manager Mode",
+      "short_name": "Manager",
+      "description": "Open Manager zone placement mode",
+      "url": "./manager.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Worker Mode",
+      "short_name": "Worker",
+      "description": "Open Worker AR view mode",
+      "url": "./worker.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

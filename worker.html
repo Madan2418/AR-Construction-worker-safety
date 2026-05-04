@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Worker Mode — See AR safety zone overlays in real-time on your camera using GPS and compass." />
+  <meta name="theme-color" content="#0A0C10" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>Worker — AR Safety</title>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <p style="color:#8892A4;font-size:14px">Starting AR view…</p>
+</div>
+
+<div class="ar-view worker-view">
+
+  <!-- Camera + canvas overlay -->
+  <div id="camera-wrapper">
+    <video id="camera-feed" autoplay muted playsinline></video>
+    <canvas id="ar-canvas"></canvas>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <a href="index.html" class="back-btn" id="btn-back">
+        ← Back
+      </a>
+      <div id="gps-status" class="status-chip" title="GPS location status">
+        GPS: acquiring…
+      </div>
+      <div id="compass-status" class="status-chip" title="Compass heading status">
+        Heading: calibrating…
+      </div>
+    </div>
+
+    <!-- Zone type legend -->
+    <div class="zone-legend" aria-label="Zone color legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#FF3B30"></div>
+        Danger
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#34C759"></div>
+        Safe
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#FF9500"></div>
+        Restricted
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#007AFF"></div>
+        Assembly
+      </div>
+    </div>
+
+    <!-- iOS compass permission button -->
+    <button id="ios-compass-btn" aria-label="Enable compass access">
+      🧭 Enable Compass
+    </button>
+
+    <!-- Floating status message -->
+    <div id="status-msg" class="status-msg" style="opacity:0" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- Bottom info bar -->
+  <div class="worker-bottom">
+    <div class="zone-count-chip" id="zone-count">Loading zones…</div>
+  </div>
+
+</div>
+
+<!-- Show iOS compass button if needed -->
+<script>
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    document.getElementById('ios-compass-btn').style.display = 'block';
+  }
+</script>
+
+<!-- Hide loading overlay once camera is ready -->
+<script type="module">
+  const overlay = document.getElementById('loading-overlay');
+  const video   = document.getElementById('camera-feed');
+  video.addEventListener('playing', () => {
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.remove(), 600);
+  });
+</script>
+
+<script type="module" src="js/worker.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="AR Construction Safety Visualizer — See the danger before you walk into it. Real-time safety zone overlays for construction sites." />
+  <meta name="theme-color" content="#0A0C10" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AR Safety" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Icons -->
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <title>AR Safety Visualizer</title>
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="AR Construction Safety Visualizer" />
+  <meta property="og:description" content="See the danger before you walk into it" />
+  <meta property="og:type" content="website" />
+</head>
+<body>
+
+<main class="landing" role="main">
+  <!-- Background decoration -->
+  <div class="landing-logo">
+    <div class="logo-icon">🦺</div>
+  </div>
+
+  <h1>AR Safety Visualizer</h1>
+  <p class="tagline">"See the danger before you walk into it"</p>
+
+  <div class="mode-cards" role="navigation" aria-label="Mode selection">
+
+    <!-- Manager Card -->
+    <a href="manager.html" class="mode-card manager" id="btn-manager" role="button" aria-label="Open Manager mode">
+      <div class="card-icon">👷</div>
+      <div class="card-title">Manager Mode</div>
+      <p class="card-desc">
+        Place safety zone markers on the live camera feed.
+        Set danger zones, safe paths, restricted areas, and assembly points.
+      </p>
+      <div class="card-badge">📍 Zone Placement</div>
+    </a>
+
+    <!-- Worker Card -->
+    <a href="worker.html" class="mode-card worker" id="btn-worker" role="button" aria-label="Open Worker mode">
+      <div class="card-icon">🔍</div>
+      <div class="card-title">Worker Mode</div>
+      <p class="card-desc">
+        See safety zones overlaid on your camera in real-time.
+        Zones are positioned using GPS and compass for accurate AR display.
+      </p>
+      <div class="card-badge">🗺️ AR View</div>
+    </a>
+
+  </div>
+
+  <!-- Zone Legend -->
+  <div style="margin-top: 40px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8892A4">
+      <span style="width:12px;height:12px;border-radius:50%;background:#FF3B30;display:inline-block"></span> Danger
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8892A4">
+      <span style="width:12px;height:12px;border-radius:50%;background:#34C759;display:inline-block"></span> Safe Path
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8892A4">
+      <span style="width:12px;height:12px;border-radius:50%;background:#FF9500;display:inline-block"></span> Restricted
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8892A4">
+      <span style="width:12px;height:12px;border-radius:50%;background:#007AFF;display:inline-block"></span> Assembly
+    </div>
+  </div>
+
+  <footer class="landing-footer">
+    <p>Requires HTTPS · Camera + GPS + Compass access</p>
+    <p style="margin-top: 4px">Built by Madankumar Senthilkumar &amp; Danielraj S — SRM Engineering</p>
+  </footer>
+</main>
+
+<!-- Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Try relative path for GitHub Pages subdirectory hosting
+        navigator.serviceWorker.register('./sw.js').catch(console.warn);
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
