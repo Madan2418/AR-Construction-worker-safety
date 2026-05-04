@@ -1,123 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Manager Mode — Place safety zones on the AR camera feed for your construction site." />
-  <meta name="theme-color" content="#0A0C10" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <meta name="theme-color" content="#0A0C10"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="icons/icon-192.png"/>
+  <link rel="apple-touch-icon" href="icons/icon-192.png"/>
+  <link rel="stylesheet" href="css/style.css"/>
   <title>Manager — AR Safety</title>
 </head>
 <body>
 
-<!-- Loading overlay -->
-<div id="loading-overlay">
-  <div class="spinner"></div>
-  <p style="color:#8892A4;font-size:14px">Starting camera…</p>
-</div>
+<div id="loading-overlay"><div class="spinner"></div><p style="color:#8892A4;font-size:14px;margin-top:12px">Starting camera…</p></div>
 
 <div class="ar-view manager-view">
-
-  <!-- Camera + canvas overlay -->
   <div id="camera-wrapper">
     <video id="camera-feed" autoplay muted playsinline></video>
     <canvas id="ar-canvas"></canvas>
 
     <!-- Status bar -->
     <div class="status-bar">
-      <a href="index.html" class="back-btn" id="btn-back">
-        ← Back
-      </a>
-      <div id="gps-status" class="status-chip" title="GPS location status">
-        GPS: acquiring…
-      </div>
-      <div id="compass-status" class="status-chip" title="Compass heading status">
-        Compass: calibrating…
-      </div>
+      <a href="index.html" class="back-btn">← Back</a>
+      <div id="gps-status"     class="status-chip">GPS…</div>
+      <div id="compass-status" class="status-chip">Compass…</div>
     </div>
 
-    <!-- Floating status message -->
-    <div id="status-msg" class="status-msg" style="opacity:0" role="status" aria-live="polite"></div>
-
-    <!-- iOS compass permission button (shown only on iOS) -->
-    <button id="ios-compass-btn" aria-label="Enable compass access">
-      🧭 Enable Compass
-    </button>
+    <div id="status-msg" class="status-msg" style="opacity:0" aria-live="polite"></div>
+    <button id="ios-compass-btn" style="display:none">🧭 Enable Compass</button>
   </div>
 
   <!-- Zone toolbar -->
   <div class="zone-toolbar">
-    <div class="toolbar-label">Drag a zone onto the camera feed</div>
-    <div class="zone-icons" role="toolbar" aria-label="Zone types">
 
-      <div class="zone-icon" data-zone="danger" draggable="true"
-           id="zone-danger" title="Danger zone — active hazard"
-           role="button" aria-label="Drag to place Danger zone">
-        <div class="zone-icon-pill">
-          <span class="zone-emoji">⚠️</span>
-        </div>
+    <!-- Radius selector row -->
+    <div class="radius-row">
+      <span class="toolbar-label">Zone radius:</span>
+      <div class="radius-ctrl">
+        <button id="radius-minus" class="radius-btn">−</button>
+        <span   id="radius-display" class="radius-val">5m</span>
+        <button id="radius-plus"  class="radius-btn">+</button>
+      </div>
+      <span class="toolbar-label" style="font-size:10px;opacity:.6">tap type to reset</span>
+    </div>
+
+    <!-- Zone icons row -->
+    <div class="toolbar-label">Drag onto camera to mark hazard location</div>
+    <div class="zone-icons">
+
+      <div class="zone-icon" data-zone="danger" draggable="true" id="zone-danger">
+        <div class="zone-icon-pill"><span class="zone-emoji">⚠️</span></div>
         <span class="zone-label">Danger</span>
       </div>
 
-      <div class="zone-icon" data-zone="safe" draggable="true"
-           id="zone-safe" title="Safe path — walk here"
-           role="button" aria-label="Drag to place Safe Path zone">
-        <div class="zone-icon-pill">
-          <span class="zone-emoji">✅</span>
-        </div>
+      <div class="zone-icon" data-zone="safe" draggable="true" id="zone-safe">
+        <div class="zone-icon-pill"><span class="zone-emoji">✅</span></div>
         <span class="zone-label">Safe Path</span>
       </div>
 
-      <div class="zone-icon" data-zone="restricted" draggable="true"
-           id="zone-restricted" title="Restricted — authorized only"
-           role="button" aria-label="Drag to place Restricted zone">
-        <div class="zone-icon-pill">
-          <span class="zone-emoji">🚧</span>
-        </div>
+      <div class="zone-icon" data-zone="restricted" draggable="true" id="zone-restricted">
+        <div class="zone-icon-pill"><span class="zone-emoji">🚧</span></div>
         <span class="zone-label">Restricted</span>
       </div>
 
-      <div class="zone-icon" data-zone="assembly" draggable="true"
-           id="zone-assembly" title="Assembly point — emergency meeting"
-           role="button" aria-label="Drag to place Assembly Point zone">
-        <div class="zone-icon-pill">
-          <span class="zone-emoji">🏥</span>
-        </div>
+      <div class="zone-icon" data-zone="assembly" draggable="true" id="zone-assembly">
+        <div class="zone-icon-pill"><span class="zone-emoji">🏥</span></div>
         <span class="zone-label">Assembly</span>
       </div>
 
     </div>
   </div>
-
 </div>
 
-<!-- Show iOS compass button if needed -->
 <script>
-  // Show iOS 13+ compass permission button if required
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    document.getElementById('ios-compass-btn').style.display = 'block';
-  }
+  if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function')
+    document.getElementById('ios-compass-btn').style.display='block';
 </script>
-
-<!-- Hide loading overlay once camera is ready -->
 <script type="module">
-  const overlay = document.getElementById('loading-overlay');
-  const video   = document.getElementById('camera-feed');
-  video.addEventListener('playing', () => {
-    overlay.classList.add('hidden');
-    setTimeout(() => overlay.remove(), 600);
+  const ov=document.getElementById('loading-overlay');
+  document.getElementById('camera-feed').addEventListener('playing',()=>{
+    ov.classList.add('hidden'); setTimeout(()=>ov.remove(),600);
   });
 </script>
-
 <script type="module" src="js/manager.js"></script>
-
 </body>
 </html>
