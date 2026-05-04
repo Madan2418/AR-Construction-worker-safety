@@ -152,31 +152,39 @@ function renderAR() {
 }
 
 function drawZoneOverlay(zone, W, H) {
-  // Compute bearing from worker to zone
-  const bearing = calculateBearing(myLat, myLng, zone.lat, zone.lng);
+  const distance = haversineDistance(myLat, myLng, zone.lat, zone.lng);
 
-  // Angular difference: negative = left of center, positive = right
+  // ── Determine bearing to zone ──────────────────────────────────────────────
+  // If worker is very close to the projected zone GPS (< 2m, GPS noise floor),
+  // fall back to the stored bearing the manager recorded — still world-fixed.
+  let bearing;
+  if (distance < 2) {
+    bearing = zone.bearing; // use manager's recorded compass direction
+  } else {
+    bearing = calculateBearing(myLat, myLng, zone.lat, zone.lng);
+  }
+
+  // ── Angular difference: where on screen should this zone appear? ───────────
+  // negative → left of centre, positive → right
   const diff = angleDiff(bearing, myHeading);
 
-  // Only render zones within the field of view (+ some margin)
+  // Clip to ±(FOV/2 + 15°) margin — hide zones clearly behind the user
   const halfFOV = HORIZONTAL_FOV / 2;
-  if (Math.abs(diff) > halfFOV + 10) return; // outside view
+  if (Math.abs(diff) > halfFOV + 15) return;
 
-  // Map angle to screen X
+  // Map angle to pixel X
   const screenX = (W / 2) + (diff / halfFOV) * (W / 2);
 
-  // Compute distance and derive screen Y (closer = lower, further = higher)
-  const distance = haversineDistance(myLat, myLng, zone.lat, zone.lng);
-  const maxDist  = 50; // meters — beyond this, pin at top
-  const minY     = H * 0.15;
-  const maxY     = H * 0.75;
-  const t = Math.min(distance / maxDist, 1);
-  const screenY  = maxY - t * (maxY - minY);
+  // ── Vertical position: closer = lower on screen ────────────────────────────
+  const maxDist = 50; // metres
+  const minY    = H * 0.15;
+  const maxY    = H * 0.75;
+  const t       = Math.min(distance / maxDist, 1);
+  const screenY = maxY - t * (maxY - minY);
 
-  // Size: closer = bigger
-  const baseSize = 36;
-  const scale    = Math.max(0.5, 1 - t * 0.5);
-  const radius   = baseSize * scale;
+  // ── Size: closer = bigger ─────────────────────────────────────────────────
+  const scale  = Math.max(0.5, 1 - t * 0.5);
+  const radius = 36 * scale;
 
   const color = ZONE_COLORS[zone.type];
   const label = ZONE_LABELS[zone.type];
@@ -184,7 +192,7 @@ function drawZoneOverlay(zone, W, H) {
 
   ctx.save();
 
-  // Pulse animation for danger zones
+  // Pulse for danger zones
   if (zone.type === 'danger') {
     const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 300);
     ctx.shadowColor = color;
@@ -205,7 +213,6 @@ function drawZoneOverlay(zone, W, H) {
   ctx.lineWidth = 2.5;
   ctx.strokeStyle = '#FFFFFF';
   ctx.stroke();
-
   ctx.shadowBlur = 0;
 
   // Zone icon
@@ -214,7 +221,7 @@ function drawZoneOverlay(zone, W, H) {
   ctx.textBaseline = 'middle';
   ctx.fillText(icon, screenX, screenY);
 
-  // Stem line
+  // Stem
   ctx.beginPath();
   ctx.moveTo(screenX, screenY + radius);
   ctx.lineTo(screenX, screenY + radius + 12);
@@ -226,12 +233,10 @@ function drawZoneOverlay(zone, W, H) {
   ctx.font = `bold ${Math.round(10 * scale)}px Inter, sans-serif`;
   const labelW = ctx.measureText(label).width + 12;
   const chipY  = screenY + radius + 16;
-
   ctx.fillStyle = 'rgba(0,0,0,0.75)';
   ctx.beginPath();
   ctx.roundRect(screenX - labelW / 2, chipY, labelW, 18, 4);
   ctx.fill();
-
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(label, screenX, chipY + 9);
 
@@ -239,19 +244,18 @@ function drawZoneOverlay(zone, W, H) {
   const distText = distance < 1000
     ? `${Math.round(distance)}m`
     : `${(distance / 1000).toFixed(1)}km`;
-
   ctx.font = `${Math.round(9 * scale)}px Inter, sans-serif`;
   const distW = ctx.measureText(distText).width + 10;
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.beginPath();
   ctx.roundRect(screenX - distW / 2, chipY + 22, distW, 16, 3);
   ctx.fill();
-
   ctx.fillStyle = color;
   ctx.fillText(distText, screenX, chipY + 30);
 
   ctx.restore();
 }
+
 
 function drawHUD(W, H) {
   // Compass arc at the top

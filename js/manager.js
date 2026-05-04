@@ -160,35 +160,88 @@ function createDragGhost(icon) {
   return ghost;
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+const HORIZONTAL_FOV = 60; // degrees — typical mobile rear camera
+const ZONE_DEPTH_M   = 8;  // assumed hazard distance ahead (meters)
+
 // ── Zone Placement ────────────────────────────────────────────────────────────
+
+/**
+ * Project a GPS point forward by `distanceM` meters along `bearingDeg`.
+ * Returns { lat, lng } of the hazard's estimated real-world position.
+ */
+function projectGPS(lat, lng, bearingDeg, distanceM) {
+  const R  = 6371000; // Earth radius in metres
+  const d  = distanceM / R;
+  const b  = (bearingDeg * Math.PI) / 180;
+  const φ1 = (lat  * Math.PI) / 180;
+  const λ1 = (lng  * Math.PI) / 180;
+
+  const φ2 = Math.asin(
+    Math.sin(φ1) * Math.cos(d) +
+    Math.cos(φ1) * Math.sin(d) * Math.cos(b)
+  );
+  const λ2 = λ1 + Math.atan2(
+    Math.sin(b) * Math.sin(d) * Math.cos(φ1),
+    Math.cos(d) - Math.sin(φ1) * Math.sin(φ2)
+  );
+
+  return {
+    lat: (φ2 * 180) / Math.PI,
+    lng: ((λ2 * 180) / Math.PI + 540) % 360 - 180 // normalise to -180..+180
+  };
+}
+
 async function placeZone(type, x, y, w, h) {
   if (currentGPS.lat === null) {
     showStatus('⚠️ Waiting for GPS fix... Try again in a moment', 'warning');
     return;
   }
+  if (currentHeading === null) {
+    showStatus('⚠️ Waiting for compass... Hold phone flat and rotate slowly', 'warning');
+    return;
+  }
 
-  const screenX = x / w;
+  const screenX = x / w; // 0 (left) → 1 (right)
   const screenY = y / h;
+
+  // Angular offset from screen centre caused by where on screen the zone was dropped.
+  // Left half of screen → negative offset (hazard is to the left of heading)
+  // Right half          → positive offset
+  const angleOffset  = (screenX - 0.5) * HORIZONTAL_FOV;
+
+  // True compass bearing toward the hazard
+  const hazardBearing = ((currentHeading + angleOffset) + 360) % 360;
+
+  // Project that bearing forward by ZONE_DEPTH_M to get a real-world GPS for the hazard
+  const hazardGPS = projectGPS(
+    currentGPS.lat,
+    currentGPS.lng,
+    hazardBearing,
+    ZONE_DEPTH_M
+  );
 
   const zoneData = {
     type,
-    lat:       currentGPS.lat,
-    lng:       currentGPS.lng,
-    bearing:   currentHeading ?? 0,
+    lat:       hazardGPS.lat,     // ← real-world hazard location (not manager's feet!)
+    lng:       hazardGPS.lng,
+    bearing:   hazardBearing,     // compass direction to hazard
+    managerLat: currentGPS.lat,   // keep manager origin for debugging
+    managerLng: currentGPS.lng,
     screenX,
     screenY,
     placedBy:  'manager-' + getManagerId()
   };
 
   try {
-    const id = await addZone(zoneData);
-    showStatus(`✅ ${ZONE_LABELS[type]} zone placed!`, 'success');
-    // Visual confirmation
+    await addZone(zoneData);
+    showStatus(`✅ ${ZONE_LABELS[type]} zone placed (${Math.round(hazardBearing)}°, ~${ZONE_DEPTH_M}m)`, 'success');
     drawZoneMarker(x, y, type, true);
   } catch (err) {
     showStatus('❌ Failed to save zone: ' + err.message, 'error');
   }
 }
+
 
 function getManagerId() {
   let id = localStorage.getItem('managerId');
